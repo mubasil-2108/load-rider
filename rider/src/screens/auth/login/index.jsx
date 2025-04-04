@@ -10,6 +10,7 @@ import useKeyboardStatus from '../../../services/helper/hooks/useKeyboardStatus'
 import { Toast } from 'toastify-react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '../../../store/authSlice'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const initialState = {
   email: '',
@@ -19,12 +20,21 @@ const initialState = {
 const Login = (props) => {
   const { navigate, replace } = props.navigation;
   const [formData, setFormData] = useState(initialState);
+  const [userRole, setUserRole] = useState(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const { user, userRole } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const role = await AsyncStorage.getItem("role");
+      setUserRole(role);
+    };
+    fetchUserRole();
+  }, []);
 
   const handleLogin = async () => {
 
@@ -45,7 +55,7 @@ const Login = (props) => {
       emailRef.current?.focus();
       return;
     }
-    if (userRole?.role === 'user'){
+    if (userRole === 'user'){
       dispatch(loginUser(formData)).then((data) => {
         if (data?.payload?.success) {
           Toast.success(<Text style={{ fontSize: fontSizes.small, fontWeight: '600' }}>{data?.payload?.message}</Text>);
